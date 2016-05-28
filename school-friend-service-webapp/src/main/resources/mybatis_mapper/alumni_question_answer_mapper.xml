@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nju.edu.cn.software.mapper.AlumniQuestionAnswerMapper">
+	<resultMap type="ContentComment" id="contentComment">
+		<id property="id" column="qaId"/>
+			<result property="content" column="qaContent"/>
+			<result property="date" column="qaDate"/>
+			<result property="contentId" column="qaContentId"/>
+			<association property="commentAuthor" javaType="com.nju.edu.cn.software.entity.AuthorInfo">
+				<result property="authorId" column="qaAuthorId"/>
+				<result property="authorName" column="qaAuthorName"/>
+				<result property="headUrl" column="qaHeadUrl"/>
+			</association>
+			<association property="commentedAuthor" javaType="AuthorInfoShort">
+				<result property="authorId" column="qaCommentedAuthorID"/>
+				<result property="authorName" column="qaCommentedAuthorName"/>
+			</association>
+	</resultMap>
+	<select id="getQuestionAnswers" parameterType="map" resultMap="contentComment">
+		SELECT
+			qA.id as qaId ,
+			qA.answer as qaContent,
+			qA.replayAuthorId as qaAuthorId,
+			ah.username as qaAuthorName,
+			ah.headIconUrl as qaHeadUrl,
+			qA.replayedAuthorId as qaCommentedAuthorID,
+			qA.replayedAuthorName as qaCommentedAuthorName,
+			qA.date as qaDate,
+			qA.questionId as qaContentId
+		FROM
+			alumni_question_answer qA
+			left outer join author ah on qA.replayAuthorId = ah.id
+		WHERE
+			qA.questionId in
+			<foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+		    	#{item.id}
+			</foreach> 
+	</select>
+	<insert id="saveAlumniQuestionAnswer" parameterType="ContentComment" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO alumni_question_answer(replayAuthorId,replayAuthorName,answer,questionId,replayedAuthorId,replayedAuthorName,date)
+		VALUES(#{commentAuthor.authorId},#{commentAuthor.authorName},#{content},#{contentId},#{commentedAuthor.authorId},#{commentedAuthor.authorName},now());
+	</insert>
+	
+	<select id="getReplayAuthorById" resultType="CommentAuthorInfo" parameterType="map">
+	 	SELECT 
+		 	replayAuthorId as authorId,
+		 	replayAuthorName as authorName,
+		 	questionId as contentId
+	 	FROM 
+	 		alumni_question_answer 
+	 	WHERE id =#{answerId}
+	 </select>
+	 
+	 
+	 
+</mapper>

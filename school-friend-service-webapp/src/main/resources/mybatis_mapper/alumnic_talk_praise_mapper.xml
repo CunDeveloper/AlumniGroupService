@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nju.edu.cn.software.mapper.AlumnicTalkPraiseMapper">
+
+	<resultMap type="AlumnicTalkPraise" id="respTalkPraise">
+		<id property="id" column="pId"/>
+		<result property="date" column="pDate"/>
+		<result property="contentId" column="pTalkId"/>
+		<association property="praiseAuthor" javaType="com.nju.edu.cn.software.entity.AuthorInfo">
+			<result property="authorId" column="pPraiseAuthorId"/>
+			<result property="authorName" column="pPraiseAuthorName"/>
+			<result property="headUrl" column="pHeadUrl"/>
+		</association>
+	</resultMap>
+	
+	<select id="getTalkPraisesByIds" resultMap="respTalkPraise" parameterType="map">
+		SELECT
+			p.id as pId,
+			p.praise_author_id as pPraiseAuthorId,
+			ah.username as pPraiseAuthorName,
+	 		ah.headIconUrl as pHeadUrl,
+			p.date as pDate,
+			p.talk_id as pTalkId
+		FROM alumni_talk_praise AS p
+		left outer join author ah on p.praise_author_id = ah.id
+			WHERE 
+			p.talk_id in
+			<foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+		    	#{item.id}
+			</foreach> 
+			AND p.praise_author_id=#{authorId}
+	</select>
+	
+	<select id="getTalkPraisesAboutAuthorByIds" resultMap="respTalkPraise" parameterType="map">
+		SELECT
+			p.id as pId,
+			p.praise_author_id as pPraiseAuthorId,
+			p.praise_author_name as pPraiseAuthorName,
+			p.date as pDate,
+			p.talk_id as pTalkId
+		FROM alumni_talk_praise AS p
+			WHERE 
+			p.talk_id in
+			<foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+		    	#{item}
+			</foreach> 
+	</select>
+	
+	 <insert id="saveAlumicPraise" useGeneratedKeys="true" parameterType="AlumnicTalkPraise"  keyProperty="id">
+	 	INSERT INTO alumni_talk_praise (praise_author_id,praise_author_name,talk_id,date)
+	 	VALUES(#{praiseAuthor.authorId},#{praiseAuthor.authorName},#{contentId},now())
+	 </insert>
+	 
+	 <select id="isPraised" parameterType="map" resultType="int" >
+	 	SELECT count(id) FROM alumni_talk_praise WHERE talk_id =#{contentId}
+	 	AND praise_author_id = #{authorId}
+	 </select>
+	 <delete id="cancelPraise" parameterType="map">
+	 	DELETE FROM alumni_talk_praise WHERE id = #{id} AND praise_author_id=#{praiseAuthorId}
+	 </delete>
+</mapper>

@@ -1,0 +1,378 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nju.edu.cn.software.mapper.AlumniQuestionMapper">
+	
+	
+	 <resultMap type="com.nju.edu.cn.software.entity.AuthorInfo" id="authorInfo">
+		<id property="authorId" column="ahId"/>
+		<result property="authorName" column="ahName"/>
+		<result property="headUrl" column="ahHeadUrl"/>
+		<result property="label" column="ahLabel"/>
+		<result property="bgUrl" column="ahBgUrl"/>
+	  </resultMap>
+	  
+	  <resultMap type="RespAlumniQuestion" id="respAlumniQuestion">
+	  	<id property="id" column="qId"/>
+		<result property="problem" column="qProblem"/>
+		<result property="description" column="qDescription"/>
+		<result property="imgPaths" column="qImgPaths"/>
+		<result property="replayCount" column="qReplayCount"/>
+		<result property="date" column="qDate"/>
+		<result property="label" column="qLabel"/>
+		<association property="author" resultMap="authorInfo"/>
+	  </resultMap>
+	  
+	  <resultMap type="AlumniQuestion" id="respOwnAlumniQuesiton">
+	  	<id property="id" column="qId"/>
+		<result property="problem" column="qProblem"/>
+		<result property="description" column="qDescription"/>
+		<result property="imgPaths" column="qImgPaths"/>
+		<result property="replayCount" column="qReplayCount"/>
+		<result property="date" column="qDate"/>
+		<result property="isSolved" column="qIsSolved"/>
+		<result property="whoScan" column="qWhoScan"/>
+		<result property="label" column="qLable"/>
+		<association property="author" resultMap="authorInfo"/>
+	  </resultMap>
+	  
+	  <sql id="selectAlumniQuestions">
+	  	SELECT 
+	  		q.id as qId,
+	  		q.problem as qProblem,
+	  		q.description as qDescription,
+	  		q.imgPaths as qImgPaths,
+	  		q.replayCount as qReplayCount,
+	  		q.date as qDate,
+	  		q.label as qLabel,
+	  		CONCAT(q.university," ",q.college," ",q.entryYear) as ahLabel,
+	  		qAh.id as ahId,
+			qAh.username as ahName,
+			qAh.headIconUrl as ahHeadUrl,
+			qAh.bgUrl as ahBgUrl
+		FROM 
+			alumni_question q 
+			left outer join author qAh on q.authorId = qAh.id
+	  </sql>
+	  
+	  <sql id="selectOwnAlumniQuestions">
+	  	SELECT 
+	  		q.id as qId,
+	  		q.problem as qProblem,
+	  		q.description as qDescription,
+	  		q.imgPaths as qImgPaths,
+	  		q.replayCount as qReplayCount,
+	  		q.date as qDate,
+	  		q.isSolved as qIsSolved,
+	  		q.whoScan as qWhoScan,
+	  		q.label as qLable,
+	  		CONCAT(q.university," ",q.college," ",q.entryYear) as ahLabel,
+	  		qAh.id as ahId,
+			qAh.username as ahName,
+			qAh.headIconUrl as ahHeadUrl,
+			qAh.bgUrl as ahBgUrl
+		FROM 
+			alumni_question q
+			left outer join author qAh on q.authorId = qAh.id
+	  </sql>
+	  
+	   <sql id="chooseId">
+		<choose>
+		    <when test="dir == 'pre'">
+		    	q.id > #{rowId}
+		    </when>
+		    <otherwise>
+		    	<if test="rowId == 0">
+		    	  q.id <![CDATA[ <=]]> (SELECT MAX(q.id) FROM alumni_question)
+		    	</if>
+		    	<if test="rowId !=0">
+		    	   q.id <![CDATA[ <=]]> #{rowId}
+		    	</if>
+		    </otherwise>
+		 </choose>
+		 AND 
+	</sql>
+	
+	<sql id="chooselimit">
+		 <choose>
+	    	<when test="dir == 'pre'">
+	    		ORDER BY q.id ASC LIMIT #{limit}
+	    	</when>
+	    	<when test="dir == 'next'">
+	    		ORDER BY q.id DESC LIMIT #{limit}
+	    	</when>
+		  </choose>
+	</sql>
+	  
+	  <sql id ="whoScanConditionSql">
+		WHERE
+		<include refid="chooseId"/>
+			q.university in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.university}
+			</foreach>
+			AND
+			q.entryYear in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.entryYear}
+			</foreach>
+			AND
+			q.college in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.college}
+			</foreach>
+			AND q.whoScan=1  AND q.isSolved=1
+			
+			OR
+			q.university in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.university}
+			</foreach>
+			AND
+			q.entryYear not in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.entryYear}
+			</foreach>
+			AND
+			q.college in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.college}
+			</foreach>
+			AND q.whoScan=2  AND q.isSolved=1
+			
+			OR
+			q.university in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.university}
+			</foreach>
+			AND
+			q.entryYear not in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.entryYear}
+			</foreach>
+			AND
+			q.college not in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.college}
+			</foreach>
+			AND q.whoScan=3  AND q.isSolved=1
+			
+			OR
+			q.university in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.university}
+			</foreach>
+			AND
+			q.entryYear  in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.entryYear}
+			</foreach>
+			AND
+			q.college not in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.college}
+			</foreach>
+		    AND q.whoScan=4  AND q.isSolved=1
+		 <include refid="chooselimit"/> 
+	</sql>
+	
+	  
+	  <select id="getAlumniQuestions" resultMap="respAlumniQuestion" parameterType="map">
+	  	 <include refid="selectAlumniQuestions"></include>
+	  	 <include refid="whoScanConditionSql"></include>
+	  </select>
+	  
+	   <select id="getAlumniQuestionsByAuthorId" resultMap="respAlumniQuestion" parameterType="map">
+	  	 <include refid="selectAlumniQuestions"></include>
+	  	 WHERE
+		   <include refid="chooseId"/>
+			q.university in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.university}
+			</foreach>
+			AND
+			q.entryYear in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.entryYear}
+			</foreach>
+			AND
+			q.college in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.college}
+			</foreach>
+			AND q.whoScan=1  AND q.isSolved=1
+			AND q.authorId = #{authorId}
+			
+			OR
+			q.university in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.university}
+			</foreach>
+			AND
+			q.entryYear not in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.entryYear}
+			</foreach>
+			AND
+			q.college in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.college}
+			</foreach>
+			AND q.whoScan=2  AND q.isSolved=1
+			AND q.authorId = #{authorId}
+			
+			OR
+			q.university in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.university}
+			</foreach>
+			AND
+			q.entryYear not in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.entryYear}
+			</foreach>
+			AND
+			q.college not in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.college}
+			</foreach>
+			AND q.whoScan=3  AND q.isSolved=1
+			AND q.authorId = #{authorId}
+			
+			OR
+			q.university in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.university}
+			</foreach>
+			AND
+			q.entryYear  in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.entryYear}
+			</foreach>
+			AND
+			q.college not in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.college}
+			</foreach>
+		    AND q.whoScan=4  AND q.isSolved=1
+		    AND q.authorId = #{authorId}
+		  <include refid="chooselimit"/> 
+	  </select>
+	  
+	  
+	  <select id="viewOwnAlumniQuestions" resultMap="respOwnAlumniQuesiton" parameterType="map">
+	  	 <include refid="selectOwnAlumniQuestions"/>
+	  	  WHERE
+	  	  <include refid="chooseId"/>
+		  	  q.university in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			    #{item.university}
+			</foreach>
+			AND
+			q.entryYear in 
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			    #{item.entryYear}
+			</foreach>
+		  	 AND  q.authorId =#{authorId} 
+	  	  <include refid="chooselimit"/>
+	  </select>
+	  
+	  <select id="viewAlumniQuestionsByCollege" resultMap="respAlumniQuestion" parameterType="map">
+	  	 <include refid="selectAlumniQuestions"/>
+	  	  WHERE
+	  	  <include refid="chooseId"/>
+		  	q.university in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			    #{item.university}
+			</foreach>
+			AND q.entryYear in 
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			   	 #{item.entryYear}
+			</foreach>
+			AND q.college = #{college} AND whoScan=1  AND q.isSolved=1
+			OR 
+			 q.entryYear not in 
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			   	 #{item.entryYear}
+			</foreach>
+			AND q.college = #{college} AND q.whoScan=2  AND q.isSolved=1
+		 <include refid="chooselimit"/>
+	  </select>
+	  
+	  <select id="viewAlumniQuestionsByYear" resultMap="respAlumniQuestion" parameterType="map">
+	  	 <include refid="selectAlumniQuestions"/>
+	     WHERE
+		     <include refid="chooseId"/>
+		  	 q.university in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			    #{item.university}
+			</foreach>
+		  	 AND  q.entryYear =#{year} AND 
+		  		 q.college in
+		  	 <foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			   	 #{item.college}
+			</foreach>
+		  	 	AND q. whoScan=1  AND q.isSolved=1
+			    OR
+			  q.entryYear =#{year} AND
+			  q.college not in 
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.college}
+			</foreach>
+			 AND q.whoScan=4  AND q.isSolved=1  AND q.isSolved=1
+		 <include refid="chooselimit"/>
+	  </select>
+	  
+	  <select id="viewAlumniQuestionsByLabel" resultMap="respAlumniQuestion" parameterType="map">
+	    <include refid="selectAlumniQuestions"/>
+	  	 WHERE
+		<include refid="chooseId"/>
+		    q.label = #{askLabel}
+		    AND
+			q.university in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.university}
+			</foreach>
+			AND
+			q.college in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.college}
+			</foreach>
+		 <include refid="chooselimit"/> 
+	  </select>
+	  
+	  <insert id="saveAnswerQuestion" parameterType="com.nju.edu.cn.software.entity.ReqAlumniQuestion" useGeneratedKeys="true" keyProperty="id">
+	  	INSERT INTO alumni_question(problem,description,imgPaths,authorId,whoScan,entryYear,college,university,date,label)
+	  	VALUES
+	  	<foreach collection="labelList" item="item" separator=",">
+	  	(#{question.problem},#{question.description},#{question.imgPaths},#{item.authorId},#{question.whoScan}
+	  	,#{item.entryYear},#{item.college},#{item.university},now(),#{question.label})
+	  	</foreach>
+	  </insert>
+	  
+	  <delete id="deleteAnswerQuestion" parameterType="map">
+	  	DELETE FROM alumni_question where id = #{id} AND authorId=#{authorId}
+	  </delete>
+	  
+	  <select id="queryImagePath" parameterType="map" resultType="string">
+		SELECT imgPaths FROM alumni_question WHERE id =#{id} AND authorId = #{author_id}
+	  </select>
+	  
+	  <select id="queryAuthorById" parameterType="map" resultType="CommentAuthorInfo">
+		SELECT authorId FROM alumni_question WHERE id =#{id}
+	  </select>
+	  
+	  <update id="closeQuestion" parameterType="map">
+	  	UPDATE alumni_question SET isSolved =1 WHERE id =#{id}
+	  	AND authorId = #{authorId}
+	  </update>
+	  
+	  <select id="isClosedQuestion" parameterType="map" resultType="int">
+	 	SELECT isSolved FROM alumni_question WHERE id =#{id}
+	  </select>
+	  
+	  <select id="getLabels" resultType="string">
+	  	    SELECT DISTINCT label FROM alumni_question 
+	  </select>
+</mapper>

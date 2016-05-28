@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nju.edu.cn.software.mapper.RecommendWorkMapper">
+	
+	<resultMap type="RespRecommendWork" id="respRecommendWork">
+		<id property="id" column="rwId"/>
+		<result property="title" column="rwTitle"/>
+		<result property="content" column="rwContent"/>
+		<result property="imgPaths" column="rwImgPaths"/>
+		<result property="date" column="rwDate"/>
+		<result property="commentCount" column="rwCommentCount"/>
+		<result property="type" column="rwType"/>
+		<result property="email" column="rwEmail"/>
+		<association property="author" javaType="com.nju.edu.cn.software.entity.AuthorInfo">
+			<id property="authorId" column="rwAuthorId"/>
+			<result property="authorName" column="rwAuthorName"/>
+			<result property="headUrl" column="rwAuthorHeadUrl"/>
+			<result property="label" column="rwLabel"/>
+			<result property="bgUrl" column="ahBgUrl"/>
+		</association>
+		<!--  
+		<collection property="contentComments" ofType="ContentComment">
+			<id property="id" column="rwaId"/>
+			<result property="date" column="rwaDate"/>
+			<result property="content" column="rwaContent"/>
+			<result property="contentId" column="rwaWorkId"/>
+			<association property="commentAuthor" javaType="AuthorInfoShort">
+				<result property="authorId" column="rwaAskAuthorId"/>
+				<result property="authorName" column="rwaAskAuthorName"/>
+			</association>
+			<association property="commentedAuthor" javaType="AuthorInfoShort">
+				<result property="authorId" column="rwaAskedAuthorId"/>
+				<result property="authorName" column="rwaAskedAuthorName"/>
+			</association>
+		</collection>
+		left outer join ask_recommend_work rwa on rw.id =rwa.work_id
+		-->
+	</resultMap>
+	
+	<select id="queryAuthorById" parameterType="map" resultType="CommentAuthorInfo">
+		SELECT author_id AS authorId FROM recommend_work WHERE id =#{id}
+	</select>
+	<insert id="saveRecommendWork" parameterType="ReqCommendWork" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO recommend_work(author_id,imgPath,title,content,type,college,university,entryYear,date,email)
+		VALUES
+		<foreach collection="labelList" item="item" separator=",">
+			(#{item.authorId},#{recommendWork.imgPaths},#{recommendWork.title},
+			#{recommendWork.content},#{recommendWork.type},
+			#{item.college},#{item.university},#{item.entryYear},now(),#{recommendWork.email})
+		</foreach>
+		
+	</insert>
+	<insert id="contentComment" parameterType="ContentComment" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO ask_recommend_work(ask_author_id,ask_author_name,content,work_id,asked_author_id,asked_author_name,date)
+		VALUES(#{commentAuthor.authorId},#{commentAuthor.authorName},#{content},#{contentId},#{commentedAuthor.authorId},#{commentedAuthor.authorName},now());
+	</insert>
+	<delete id="deleteRecommendWork" >
+		DELETE FROM recommend_work WHERE id = #{id} AND author_id = #{author_id}
+	</delete>
+	<select id="queryImagePath" parameterType="map" resultType="string">
+		SELECT imgPath FROM recommend_work WHERE id =#{id} AND author_id = #{author_id}
+	</select>
+	<sql id="respRecommendWorksSql">
+		SELECT 
+			rw.id as rwId,
+			rw.title as rwTitle,
+			rw.content as rwContent,
+			rw.imgPath as rwImgPaths,
+			rw.date as rwDate,
+			rw.commentCount as rwCommentCount,
+			rw.type as rwType,
+			rw.email as rwEmail,
+			CONCAT(rw.university," ",rw.college," ",rw.entryYear) as rwLabel,
+			rwAh.id as rwAuthorId,
+			rwAh.username as rwAuthorName,
+			rwAh.headIconUrl as rwAuthorHeadUrl,
+			rwAh.bgUrl as ahBgUrl
+		FROM recommend_work rw
+			left outer join author rwAh on rw.author_id = rwAh.id 
+	</sql>
+	
+	<sql id="chooseId">
+		<choose>
+		    <when test="dir == 'pre'">
+		    	rw.id > #{rowId}
+		    </when>
+		    <otherwise>
+		    	<if test="rowId == 0">
+		    	  rw.id <![CDATA[ <=]]> (SELECT MAX(rw.id) FROM recommend_work)
+		    	</if>
+		    	<if test="rowId !=0">
+		    		rw.id <![CDATA[ <=]]> #{rowId}
+		    	</if>
+		    </otherwise>
+		 </choose>
+		 AND 
+	</sql>
+	<sql id="chooselimit">
+		 <choose>
+	    	<when test="dir == 'pre'">
+	    		ORDER BY rw.id ASC LIMIT #{limit}
+	    	</when>
+	    	<when test="dir == 'next'">
+	    		ORDER BY rw.id DESC LIMIT #{limit}
+	    	</when>
+		  </choose>
+	</sql>
+	
+	<select id="getRecommendWorks" parameterType="map" resultMap="respRecommendWork">
+		 <include refid="respRecommendWorksSql"/>
+		 WHERE 
+			 <include refid="chooseId"/>
+			 rw.university in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			    #{item.university}
+			</foreach>
+			AND rw.college in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			    #{item.college} 
+			</foreach>
+		<include refid="chooselimit"/>
+	</select>
+	
+	<select id="getRecommendWorksByAuthorId" parameterType="map" resultMap="respRecommendWork">
+		 <include refid="respRecommendWorksSql"/>
+		 WHERE 
+			 <include refid="chooseId"/>
+			 rw.university in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			    #{item.university}
+			</foreach>
+			AND rw.college in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			    #{item.college} 
+			</foreach>
+			AND rw.author_id = #{authorId}
+		<include refid="chooselimit"/>
+	</select>
+	
+	<select id="viewOwnRecommendWorks" parameterType="map" resultMap="respRecommendWork">
+		<include refid="respRecommendWorksSql"/>
+		 WHERE 
+			<include refid="chooseId"/>
+			    rw.university in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			    #{item.university}
+			</foreach>
+			    AND rw.college in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			    #{item.college} 
+			</foreach>
+				AND rw.author_id = #{authorId}
+		<include refid="chooselimit"/>
+	</select>
+	
+	<select id="viewRecommendWorksByType" parameterType="map" resultMap="respRecommendWork">
+		<include refid="respRecommendWorksSql"/>
+		 WHERE 
+		 <include refid="chooseId"/>
+			 rw.university in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			    #{item.university}
+			</foreach>
+			AND rw.college in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			    #{item.college} 
+			</foreach>
+			AND	rw.type = #{type}
+		<include refid="chooselimit"/>
+	</select>
+	
+	<select id="viewRecommendWorksByCollege" parameterType="map" resultMap="respRecommendWork">
+		<include refid="respRecommendWorksSql"/>
+		 WHERE
+		 <include refid="chooseId"/>
+		 rw.university in
+		<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		    #{item.university}
+		</foreach>
+		AND rw.college = #{college}
+		<include refid="chooselimit"/>
+	</select>
+	
+	<select id="viewRecommendWorksByTypeAndCollege" parameterType="map" resultMap="respRecommendWork">
+		<include refid="respRecommendWorksSql"/>
+		 WHERE
+		 <include refid="chooseId"/>
+		 rw.university in
+		<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		    #{item.university}
+		</foreach>
+		AND	rw.college = #{college} AND rw.type =#{type}
+		<include refid="chooselimit"/>
+	</select>
+	
+</mapper>

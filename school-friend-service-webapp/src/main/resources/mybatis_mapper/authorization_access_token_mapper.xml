@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nju.edu.cn.software.mapper.AuthorizationTokenMapper">
+	<insert id="saveAuthorizationToken" parameterType="AuthenticationAccessToken" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO authorization_token(tokenId,userId,diviceId,appId,date)
+		VALUES(#{tokenId},#{userId},#{diviceId},#{appId},now())
+	</insert>
+	<update id="updateAuthorizationToken" parameterType="map">
+		UPDATE authorization_token SET tokenId=#{tokenId} where userId=#{userId} 
+	</update>
+	
+	<update id="updateToken" parameterType="map">
+		UPDATE authorization_token SET tokenId=#{tokenId},diviceId = #{diviceId} where userId=#{userId} 
+	</update>
+	
+	<select id="getAuthorizationToken" parameterType="map" resultType="AuthenticationAccessToken">
+		SELECT tokenId,diviceId,appId,userId FROM authorization_token
+		WHERE userId = #{userId}
+	</select>
+	
+	<select id="validateAuthorizationToken" parameterType="map" resultType="int">
+		SELECT count(id) FROM authorization_token 
+		WHERE
+			tokenId=#{tokenId} AND userId=#{userId} 
+			AND diviceId=#{diviceId} AND appId=#{appId}
+	</select>
+</mapper>

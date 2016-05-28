@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nju.edu.cn.software.mapper.UserDegreeInfoMapper">
+	 <insert id="saveUserDegreeInfo" useGeneratedKeys="true" parameterType="UserDegreeInfo" keyProperty="id">
+	 	INSERT INTO user_degree_info(level,universityName,schoolName,major,startDate,realName,sex,date)
+	 	VALUES(#{level},#{universityName},#{schoolName},#{major},#{startDate},#{realName},#{sex},now())
+	 </insert>
+	 <select id="getLabelInfoByAuthorId" parameterType="map" resultType="com.nju.edu.cn.software.entity.LabelInfo">
+	 	SELECT universityName AS university,schoolName AS college,startDate AS entryYear,level
+	 	FROM user_degree_info WHERE authorId = #{authorId}
+	 </select>
+	 
+	 <select id="getDegreeInfos" resultType="UserDegreeInfo" parameterType="com.nju.edu.cn.software.entity.LabelInfo">
+	 	SELECT 
+	 		level,
+	 		universityName,
+	 		schoolName,
+	 		major,
+	 		startDate,
+	 		realName,
+	 		sex
+	 	FROM user_degree_info WHERE authorId = #{authorId}
+	 </select>
+	 
+	  <select id="getUserDegrees" resultType="UserDegreeInfo" parameterType="map">
+	 	SELECT 
+	 	    id,
+	 		level,
+	 		universityName,
+	 		schoolName,
+	 		major,
+	 		startDate,
+	 		realName,
+	 		date,
+	 		sex
+	 	FROM user_degree_info WHERE authorId = #{authorId}
+	 </select>
+	 
+	 <select id="getOtherUserDegrees" resultType="UserDegreeInfo" parameterType="map">
+	 	SELECT 
+	 	    id,
+	 		level,
+	 		universityName,
+	 		schoolName,
+	 		major,
+	 		startDate,
+	 		realName,
+	 		date,
+	 		sex
+	 	FROM user_degree_info WHERE authorId = #{authorId} AND realName = #{authorName}
+	 </select>
+	 
+	 <select id="getLabelInfosByAuthorId" resultType="com.nju.edu.cn.software.entity.LabelInfo" parameterType="com.nju.edu.cn.software.entity.LabelInfo">
+	 	SELECT universityName AS university,schoolName AS college,startDate AS entryYear,level,authorId
+	 	FROM user_degree_info WHERE authorId = #{authorId}
+	 </select>
+	 
+	 <select id="getDegreeInfoLevel" parameterType="map" resultType="string">
+	 	SELECT level FROM user_degree_info WHERE authorId = #{authorId}
+	 </select>
+	 
+	 <select id="getUniversitys" parameterType="map" resultType="SchoolInfoShort">
+	 	SELECT level, universityName FROM user_degree_info WHERE authorId =#{authorId}
+	 </select>
+	 
+	 <select id="isAuthorization" parameterType="map" resultType="int">
+	 	SELECT count(id) FROM user_degree_info WHERE authorId =#{authorId}
+	 </select>
+</mapper>

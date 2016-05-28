@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nju.edu.cn.software.mapper.DynamicCollectMapper">
+	
+	
+	<insert id="saveCollect" parameterType="DynamicCollect" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO dynamic_collect (author_id,text,imgPath,date)
+		VALUES(#{authorId},#{text},#{imagePath},now())
+	</insert>
+	<delete id="deleteCollect" parameterType="map">
+		DELETE FROM dynamic_collect where id = #{id} AND author_id = #{authorId}
+	</delete>
+	
+	<select id="getCollects" parameterType="map" resultType="DynamicCollect">
+		SELECT
+		 	id as id,
+		 	author_id as authorId,
+		 	text as text,
+		 	imgPath as imagePath,
+		 	date as date
+		 FROM dynamic_collect WHERE author_id = #{authorId}
+	</select>
+	
+	<select id="isCollected" parameterType="map" resultType="int">
+		SELECT count(id) FROM dynamic_collect where id = #{id} AND author_id = #{authorId}
+	</select>
+	
+</mapper>

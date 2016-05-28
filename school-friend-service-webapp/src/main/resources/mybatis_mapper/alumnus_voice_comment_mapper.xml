@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nju.edu.cn.software.mapper.AlumnusVoiceCommentMapper">
+
+	<resultMap type="ContentComment" id="comments">
+		<id property="id" column="avo_c_d"/>
+	    <result property="date" column="avo_c_date"/>
+	    <result property="contentId" column="avo_c_voice_id"/>
+	    <result property="content" column="avo_c_content"/>
+	    <association property="commentAuthor" javaType="com.nju.edu.cn.software.entity.AuthorInfo">
+	    	<result property="authorId" column="avo_c_commentAuthorId"/>
+			<result property="authorName" column="avo_c_commentAuthorName"/>
+			<result property="headUrl" column="avo_c_headUrl"/>
+	    </association>
+	    <association property="commentedAuthor" javaType="AuthorInfoShort">
+	    	<result property="authorId" column="avo_c_ommentedAuthorID"/>
+			<result property="authorName" column="avo_c_commentedAuthorName"/>
+	    </association>
+	</resultMap>
+	
+	<select id="getCommentsByVoiceId" parameterType="map" resultMap="comments">
+		SELECT 
+			voc.id as avo_c_d,
+			voc.date as avo_c_date,
+	 		voc.content as avo_c_content,
+	 		voc.alumnus_voice_id as avo_c_voice_id,
+	 		ah.username as avo_c_commentAuthorName,
+	 		ah.headIconUrl as avo_c_headUrl,
+	 		voc.commented_author_name as avo_c_commentedAuthorName,
+	 		voc.commented_author_id as avo_c_ommentedAuthorID,
+	 		voc.comment_author_id as avo_c_commentAuthorId
+	 	FROM
+	 		alumnus_voice_comment voc
+	 		left outer join author ah on voc.comment_author_id = ah.id
+	 	WHERE voc.alumnus_voice_id in
+	 	<foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+		    #{item.id}
+		</foreach> 
+		
+	</select>
+	
+	 <insert id="contentComment" parameterType="ContentComment" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO alumnus_voice_comment(comment_author_id,comment_author_name,content,alumnus_voice_id,commented_author_id,commented_author_name,date)
+		VALUES(#{commentAuthor.authorId},#{commentAuthor.authorName},#{content},#{contentId},#{commentedAuthor.authorId},#{commentedAuthor.authorName},now());
+	</insert>
+	 
+	 
+	 <delete id="cancelAlumnusVoiceComment" parameterType="map">
+	 	DELETE FROM alumnus_voice_comment WHERE id =#{id} AND comment_author_id = #{commentAuthorId}
+	 </delete>
+	 
+	 <select id="getCommentAuthorById" resultType="CommentAuthorInfo" parameterType="map">
+	 	SELECT 
+		 	comment_author_id as authorId,
+		 	comment_author_name as authorName,
+		 	alumnus_voice_id as contentId
+	 	FROM 
+	 		alumnus_voice_comment 
+	 	WHERE id =#{id}
+	 </select>
+</mapper>

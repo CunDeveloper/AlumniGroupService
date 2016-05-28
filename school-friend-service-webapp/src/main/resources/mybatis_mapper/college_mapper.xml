@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nju.edu.cn.software.mapper.CollegeMapper">
+	  <select id="getColleageByUniversity" resultType="string" parameterType="map">
+	  	SELECT s.name FROM university as u ,school as s where u.id = s.collegeId and u.name=#{name}
+	  </select>
+</mapper>

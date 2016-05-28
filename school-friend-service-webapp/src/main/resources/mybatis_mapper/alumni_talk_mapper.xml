@@ -1,0 +1,364 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nju.edu.cn.software.mapper.AlumniTalkMapper">
+
+	<resultMap type = "com.nju.edu.cn.software.entity.AuthorInfo" id = "authorInfo">
+		<id property="authorId" column="ahId"/>
+		<result property="authorName" column="ahName"/>
+		<result property="headUrl" column="ahHeadUrl"/>
+		<result property="label" column="ahLabel"/>
+		<result property="bgUrl" column="ahBgUrl"/>
+	</resultMap>
+ 
+	
+	<resultMap type="RespOwnAlumnicTalk" id="respOwnAlumnicTalk">
+		<id property="id" column="aId"/>
+		<result property="content" column="aContent"/>
+		<result property="imagePaths" column="aImagePaths"/>
+		<result property="location" column="aLocation"/>
+		<result property="whoScan" column="aWhoScan"/>
+		<result property="date" column="aDate"/>
+		<result property="commentCount" column="aCommentCount"/>
+		<result property="praiseCount" column="aPraiseCount"/>
+		<association property="authorInfo" resultMap="authorInfo"/>
+	</resultMap>
+	
+	<resultMap type="RespAlumnicTalk" id="respAlumnicTalk">
+		<id property="id" column="aId"/>
+		<result property="content" column="aContent"/>
+		<result property="imagePaths" column="aImagePaths"/>
+		<result property="location" column="aLocation"/>
+		<result property="date" column="aDate"/>
+		<result property="commentCount" column="aCommentCount"/>
+		<result property="praiseCount" column="aPraiseCount"/>
+		<association property="authorInfo" resultMap="authorInfo"/>
+	</resultMap>
+	
+	<sql id="ownAlumniTalkSql">
+		SELECT 
+			a.id as aId,
+			a.content as aContent,
+			a.imagePaths as aImagePaths,
+			a.date as aDate,
+			a.location as aLocation,
+			a.whoScan as aWhoScan,
+			a.praiseCount as aPraiseCount,
+			a.commentCount as aCommentCount,
+			CONCAT(a.university," ",a.college," ",a.entryYear) as ahLabel,
+			ah.id as ahId,
+			ah.username as ahName,
+			ah.headIconUrl as ahHeadUrl,
+			ah.bgUrl as ahBgUrl
+		FROM alumni_talk a
+			left outer join author ah on a.author_id = ah.id
+	</sql>
+	
+	<sql id="alumniTalkSql">
+		SELECT 
+			a.id as aId,
+			a.content as aContent,
+			a.imagePaths as aImagePaths,
+			a.date as aDate,
+			a.location as aLocation,
+			a.praiseCount as aPraiseCount,
+			a.commentCount as aCommentCount,
+			CONCAT(a.university," ",a.college," ",a.entryYear) as ahLabel,
+			ah.id as ahId,
+			ah.username as ahName,
+			ah.headIconUrl as ahHeadUrl,
+			ah.bgUrl as ahBgUrl
+		FROM alumni_talk a
+			left outer join author ah on a.author_id = ah.id
+	</sql>
+	<sql id="chooseId">
+		<choose>
+		    <when test="dir == 'pre'">
+		    	a.id > #{rowId}
+		    </when>
+		    <otherwise>
+		    	<if test="rowId == 0">
+		    	  a.id <![CDATA[ <=]]> (SELECT MAX(a.id) FROM alumni_talk)
+		    	</if>
+		    	<if test="rowId !=0">
+		    		a.id <![CDATA[ <=]]> #{rowId}
+		    	</if>
+		    </otherwise>
+		 </choose>
+		 AND 
+	</sql>
+	<sql id="chooselimit">
+		 <choose>
+	    	<when test="dir == 'pre'">
+	    		ORDER BY a.id ASC LIMIT #{limit}
+	    	</when>
+	    	<when test="dir == 'next'">
+	    		ORDER BY a.id DESC LIMIT #{limit}
+	    	</when>
+		  </choose>
+	</sql>
+	<sql id ="whoScanConditionSql">
+		WHERE 
+		    <include refid="chooseId"/>
+				a.university in
+				<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			   	 	#{item.university}
+				</foreach>
+				AND
+				a.entryYear in
+				<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			   	 	#{item.entryYear}
+				</foreach>
+				AND
+				a.college in
+				<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			   	 	#{item.college}
+				</foreach>
+				AND a.whoScan=1
+				
+				OR
+				a.university in
+				<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			   	 	#{item.university}
+				</foreach>
+				AND
+				a.entryYear not in
+				<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			   	 	#{item.entryYear}
+				</foreach>
+				AND
+				a.college in
+				<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			   	 	#{item.college}
+				</foreach>
+				AND a.whoScan=2
+				
+				OR
+				a.university in
+				<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			   	 	#{item.university}
+				</foreach>
+				AND
+				a.entryYear not in
+				<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			   	 	#{item.entryYear}
+				</foreach>
+				AND
+				a.college not in
+				<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			   	 	#{item.college}
+				</foreach>
+				AND a.whoScan=3
+				
+				OR
+				a.university in
+				<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			   	 	#{item.university}
+				</foreach>
+				AND
+				a.entryYear  in
+				<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			   	 	#{item.entryYear}
+				</foreach>
+				AND
+				a.college not in
+				<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			   	 	#{item.college}
+				</foreach>
+			    AND a.whoScan=4
+			 <include refid="chooselimit"/>
+	</sql>
+	
+	<select id="getAlumniTalks" resultMap="respAlumnicTalk">
+		 <include refid="alumniTalkSql"/>
+		 <include refid="whoScanConditionSql"/>
+	</select>
+	
+	<select id="getAlumniTalksByAuthorId" resultMap="respAlumnicTalk">
+		 <include refid="alumniTalkSql"/>
+		WHERE 
+		    <include refid="chooseId"/>
+				a.university in
+				<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			   	 	#{item.university}
+				</foreach>
+				AND
+				a.entryYear in
+				<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			   	 	#{item.entryYear}
+				</foreach>
+				AND
+				a.college in
+				<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			   	 	#{item.college}
+				</foreach>
+				AND a.whoScan=1
+				AND a.author_id = #{authorId}
+				
+				OR
+				a.university in
+				<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			   	 	#{item.university}
+				</foreach>
+				AND
+				a.entryYear not in
+				<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			   	 	#{item.entryYear}
+				</foreach>
+				AND
+				a.college in
+				<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			   	 	#{item.college}
+				</foreach>
+				AND a.whoScan=2
+				AND a.author_id = #{authorId}
+				
+				OR
+				a.university in
+				<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			   	 	#{item.university}
+				</foreach>
+				AND
+				a.entryYear not in
+				<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			   	 	#{item.entryYear}
+				</foreach>
+				AND
+				a.college not in
+				<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			   	 	#{item.college}
+				</foreach>
+				AND a.whoScan=3
+				AND a.author_id = #{authorId}
+				
+				OR
+				a.university in
+				<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			   	 	#{item.university}
+				</foreach>
+				AND
+				a.entryYear  in
+				<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			   	 	#{item.entryYear}
+				</foreach>
+				AND
+				a.college not in
+				<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			   	 	#{item.college}
+				</foreach>
+			    AND a.whoScan=4
+			    AND a.author_id = #{authorId}
+			 <include refid="chooselimit"/>
+	</select>
+	
+	<select id="viewMostHotTalk" resultMap="respAlumnicTalk">
+		<include refid="alumniTalkSql"></include>
+		<include refid="whoScanConditionSql"/>
+		ORDER  BY  a.praiseCount DESC ,a.commentCount DESC LIMIT #{offset},#{limit}
+	</select>
+	
+	<select id="viewAlumniTalksByYear" resultMap="respAlumnicTalk">
+		<include refid="alumniTalkSql"/>
+		WHERE 
+		<include refid="chooseId"/>
+			a.university in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.university}
+			</foreach>
+			AND
+			a.college  in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.college}
+			</foreach> 
+			AND a.entryYear = #{year} AND whoScan=1
+			
+			OR
+			a.university in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			   	 #{item.university}
+			</foreach>
+			AND
+			a.college not in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.college}
+			</foreach> 
+			AND a.entryYear = #{year} AND whoScan=4
+		<include refid="chooselimit"/>
+	</select>
+	
+	<select id="viewAlumniTalksByCollege" resultMap="respAlumnicTalk">
+		<include refid="alumniTalkSql"/>
+		    WHERE 
+		    <include refid="chooseId"/>
+			    a.university in
+				<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			   	 	#{item.university}
+				</foreach>
+				AND 
+			    a.entryYear  in
+				<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			   	 	#{item.entryYear}
+				</foreach> 
+				AND a.college = #{college} AND whoScan=1
+				
+				OR
+				a.university in
+				<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			   	 	#{item.university}
+				</foreach>
+				AND
+				a.entryYear not in
+				<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			   	 	#{item.entryYear}
+				</foreach> 
+				AND a.college = #{college} AND whoScan=2
+			<include refid="chooselimit"/>
+	</select>
+	
+	<select id="viewOwnAlumniTalks" resultMap="respOwnAlumnicTalk">
+		<include refid="ownAlumniTalkSql"/>
+		WHERE
+		<include refid="chooseId"/>
+			a.university in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			    #{item.university}
+			</foreach>
+			AND a.college in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			    #{item.college} 
+			</foreach>
+				AND a.author_id = #{authorId}
+		<include refid="chooselimit"/>
+	</select>
+	
+	
+	<select id="queryAuthorById" parameterType="map" resultType="CommentAuthorInfo">
+		SELECT author_id AS authorId FROM alumni_talk WHERE id =#{id}
+	</select>
+	
+	<insert id="saveContent" parameterType="com.nju.edu.cn.software.entity.ReqAlumniTalk" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO alumni_talk(content,imagePaths,author_id,entryYear,college,university,whoScan,date,location)
+		VALUES
+		<foreach collection="labelList" item="item" separator=",">
+			(#{alumnicTalk.content},#{alumnicTalk.imagePaths},#{item.authorId},#{item.entryYear},#{item.college},
+			#{item.university},#{alumnicTalk.whoScan},now(),#{alumnicTalk.location})
+		</foreach>
+		
+	</insert>
+	<delete id="cancelContent" parameterType="map">
+		DELETE FROM alumni_talk where id = #{id} AND author_id=#{author_id}
+	</delete>
+	<select id="getContentsByAuthor" resultType="AlumniTalk">
+		SELECT * FROM alumni_talk WHERE author_id =#{authorId}
+	</select>
+	
+	<select id="queryImagePaths" parameterType="map" resultType="string">
+		SELECT imagePaths FROM alumni_talk WHERE id =#{id} AND author_id = #{author_id}
+	</select>
+	
+	<select id="getTalkIdByAuthorId" parameterType="map" resultType="int">
+		SELECT id FROM alumni_talk where author_id = #{authorId}
+	</select>
+	
+</mapper>

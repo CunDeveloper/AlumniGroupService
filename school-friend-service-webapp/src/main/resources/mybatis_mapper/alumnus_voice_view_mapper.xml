@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nju.edu.cn.software.mapper.AlumnusVoiceViewMapper">
+	<resultMap type="AlumnusVoiceView" id="alumnusVoiceView">
+		<association property="alumnusVoice" javaType="AlumnusVoice">
+			<id property="id" column="id"/>
+			<result property="title" column="title"/>
+			<result property="content" column="content"/>
+			<result property="imgPaths" column="imgPaths"/>
+			<result property="date" column="date"/>
+			<association property="author" javaType="Author">
+				<id property="id" column="author_id"/>
+			</association>
+		</association>
+		<collection property="alumnusVoiceComments" ofType="AlumnusVoiceComment">
+			 <id property="id" column="id"/>
+			 <result property="content" column="content"/>
+			 <result property="date" column="date"/>
+			 <association property="commentAuthor" javaType="Author">
+			 	<id property="id" column="comment_author_id"/>
+			 	<result property="username" column="comment_author_name"/>
+			 </association>
+			 <association property="commentedAuthor" javaType="Author">
+			 	<id property="id" column="commented_author_id"/>
+			 	<result property="username" column="commented_author_name"/>
+			 </association>
+		</collection>
+		<collection property="alumnusVoicePraises" ofType="AlumnusVoicePraise">
+			<id property="id" column="id"/>
+			<result property="date" column="date"/>
+			<result property="contentId" column="content_id"/>
+			<association property="praiseAuthor" javaType="Author">
+				<id property="id" column="praise_author_id"/>
+				<result property="username" column="praise_author_name"/>
+			</association>
+		</collection>
+	</resultMap>
+	<select id="getAlumnusVoiceByUniversity" resultMap="alumnusVoiceView">
+		SELECT 
+			voice.id ,
+			voice.title,
+			voice.content,
+			voice.imgPaths,
+			voice.date,
+			voice.author_id,
+			comment.id, 
+			comment.content,
+			comment.comment_author_id,
+			comment.comment_author_name,
+			comment.commented_author_id,
+			comment.commented_author_name,
+			comment.alumnus_voice_id,
+			praise.id,
+			praise.date,
+			praise.content_id,
+			praise.praise_author_id,
+			praise.praise_author_name
+		FROM  
+			alumnus_voice  voice LEFT OUTER JOIN alumnus_voice_comment  COMMENT ON voice.id = comment.alumnus_voice_id
+			LEFT OUTER JOIN alumnus_voice_praise praise ON voice.id=praise.content_id
+		
+	</select>
+</mapper>

@@ -1,0 +1,6 @@
+{
+    "tokenId":"146340017623906",
+    "userId":1,
+    "diviceId":"37b45629c0fb1b89",
+    "appId":"sdQBTAE6uNpjSvcx8kd2RCxMTBxtMTMM"
+}

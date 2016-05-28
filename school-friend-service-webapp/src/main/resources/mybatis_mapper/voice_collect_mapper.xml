@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nju.edu.cn.software.mapper.VoiceCollectMapper">
+	
+	 <resultMap type="com.nju.edu.cn.software.entity.AuthorInfo" id="authorInfo">
+		<id property="authorId" column="ahId"/>
+		<result property="authorName" column="ahName"/>
+		<result property="headUrl" column="ahHeadUrl"/>
+		<result property="label" column="avoAhLabel"/>
+	  </resultMap>
+	
+	<resultMap type="VoiceCollect" id="voiceCollect">
+		<id column="dId" property="id" />
+		<result column="dAuthorId" property="authorId"/>
+		<result column="dDate" property="date"/>
+		<association property="alumnusVoice" javaType="AlumnusVoice">
+			<id column="voId" property="id"/>
+			<result column="voTitle" property="title"/>
+			<result property="content" column="voContent"/>
+			<result property="imgPaths" column="voImgPaths"/>
+			<result property="label" column="voLabel"/>
+			<result property="date" column="voDate"/>
+			<association property="author" resultMap="authorInfo"/>
+		</association>
+	</resultMap>
+	
+	<insert id="saveCollect" parameterType="VoiceCollect" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO voice_collect (voice_id,author_id,date)
+		VALUES(#{alumnusVoice.id},#{authorId},now())
+	</insert>
+	<delete id="deleteCollect" parameterType="map">
+		DELETE FROM voice_collect where id = #{id} AND author_id = #{authorId}
+	</delete>
+	
+	<select id="getCollects" parameterType="map" resultMap="voiceCollect">
+		SELECT 
+			vc.id as dId,
+			vc.author_id as dAuthorId,
+			vc.date as dDate,
+			av.id as voId,
+	 		av.title as voTitle,
+	 		av.content as voContent,
+	 		av.imgPaths as voImgPaths,
+	 		av.date as voDate,
+	 		av.label as voLabel,
+	 		CONCAT(av.university,av.college," ",av.entryYear) as avoAhLabel,
+	 		ah.id as ahId,
+	 		ah.username as ahName,
+	 		ah.headIconUrl as ahHeadUrl
+			FROM voice_collect vc
+				LEFT OUTER JOIN alumnus_voice av ON vc.voice_id= av.id
+				LEFT OUTER JOIN author ah ON av.author_id = ah.id
+			WHERE vc.author_id = #{authorId}
+	</select>
+	
+	<select id="isCollected" parameterType="map" resultType="int">
+		SELECT count(id) FROM voice_collect where voice_id = #{id} AND author_id = #{authorId}
+	</select>
+	
+</mapper>

@@ -1,0 +1,518 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nju.edu.cn.software.mapper.AlumnsVoiceMapper">	
+	<resultMap type="com.nju.edu.cn.software.entity.AuthorInfo" id="authorInfo">
+		<id property="authorId" column="avoAhId"/>
+		<result property="authorName" column="avoAhName"/>
+		<result property="headUrl" column="avoAhHeadUrl"/>
+		<result property="label" column="avoAhLabel"/>
+		<result property="bgUrl" column="ahBgUrl"/>
+	</resultMap>
+	
+	<resultMap type="AlumnusVoice" id="ownAlumnusVoices">
+		<id property="id" column="avoId"/>
+	 	<result property="title" column="avoTitle"/>
+	 	<result property="content" column="avoContent"/>
+	 	<result property="imgPaths" column="avoImagePaths"/>
+	 	<result property="date" column="avoDate"/>
+	 	<result property="whoScan" column="avoWhoScan"/>
+	 	<result property="label" column="avolabel"/>
+	    <association property="author" resultMap="authorInfo"></association>
+	</resultMap>
+	
+	 <resultMap type="RespAlumnicVoice" id="alumnusVoices">
+	 	<id property="id" column="avoId"/>
+	 	<result property="title" column="avoTitle"/>
+	 	<result property="content" column="avoContent"/>
+	 	<result property="imgPaths" column="avoImagePaths"/>
+	 	<result property="date" column="avoDate"/>
+	 	<result property="label" column="avolabel"/>
+	 	<result property="praiseCount" column="avoPraiseCount"/>
+	 	<result property="commentCount" column="avoCommentCount"/>
+	    <association property="author" resultMap="authorInfo"></association>
+	 </resultMap>
+	 
+	 <sql id="ownAlumnusVoicesSql">
+	 	SELECT 
+	 		vo.id as avoId,
+	 		vo.title as avoTitle,
+	 		vo.content as avoContent,
+	 		vo.imgPaths as avoImagePaths,
+	 		vo.date as avoDate,
+	 		vo.praiseCount as avoPraiseCount,
+	 		vo.commentCount as avoCommentCount,
+	 		vo.whoScan as avoWhoScan,
+	 		vo.label as avolabel,
+	 		CONCAT(vo.university,vo.college," ",vo.entryYear) as avoAhLabel,
+	 		voAh.id as avoAhId,
+	 		voAh.username as avoAhName,
+	 		voAh.headIconUrl as avoAhHeadUrl,
+	 		voAh.bgUrl as ahBgUrl
+	 	FROM alumnus_voice vo
+			left outer join author voAh on vo.author_id = voAh.id
+	 </sql>
+	 
+	 <sql id="chooseId">
+		<choose>
+		    <when test="dir == 'pre'">
+		    	vo.id > #{rowId}
+		    </when>
+		    <otherwise>
+		    	<if test="rowId == 0">
+		    	  vo.id <![CDATA[ <=]]> (SELECT MAX(vo.id) FROM alumnus_voice)
+		    	</if>
+		    	<if test="rowId !=0">
+		    	   vo.id <![CDATA[ <=]]> #{rowId}
+		    	</if>
+		    </otherwise>
+		 </choose>
+		 AND 
+	</sql>
+	
+	<sql id="chooselimit">
+		 <choose>
+	    	<when test="dir == 'pre'">
+	    		ORDER BY vo.id ASC LIMIT #{limit}
+	    	</when>
+	    	<when test="dir == 'next'">
+	    		ORDER BY vo.id DESC LIMIT #{limit}
+	    	</when>
+		  </choose>
+	</sql>
+	 
+	  <sql id ="whoScanConditionSql">
+		WHERE 
+		<include refid="chooseId"/>
+		    vo.university in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.university}
+			</foreach>
+			AND
+			vo.entryYear in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.entryYear}
+			</foreach>
+			AND
+			vo.college in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.college}
+			</foreach>
+			AND vo.whoScan=1 
+			
+			OR
+			vo.university in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.university}
+			</foreach>
+			AND
+			vo.entryYear not in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.entryYear}
+			</foreach>
+			AND
+			vo.college in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.college}
+			</foreach>
+			AND vo.whoScan=2 
+			
+			OR
+			vo.university in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.university}
+			</foreach>
+			AND
+			vo.entryYear not in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.entryYear}
+			</foreach>
+			AND
+			vo.college not in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.college}
+			</foreach>
+			AND vo.whoScan=3  
+			
+			OR
+			vo.university in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.university}
+			</foreach>
+			AND
+			vo.entryYear  in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.entryYear}
+			</foreach>
+			AND
+			vo.college not in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.college}
+			</foreach>
+		    AND vo.whoScan=4
+		 <include refid="chooselimit"/>
+	</sql>
+	 
+	 <sql id="alumnusVoicesSql">
+	 	SELECT 
+	 		vo.id as avoId,
+	 		vo.title as avoTitle,
+	 		vo.content as avoContent,
+	 		vo.imgPaths as avoImagePaths,
+	 		vo.date as avoDate,
+	 		vo.praiseCount as avoPraiseCount,
+	 		vo.commentCount as avoCommentCount,
+	 		vo.label as avolabel,
+	 		CONCAT(vo.university,vo.college," ",vo.entryYear) as avoAhLabel,
+	 		voAh.id as avoAhId,
+	 		voAh.username as avoAhName,
+	 		voAh.headIconUrl as avoAhHeadUrl,
+	 		voAh.bgUrl as ahBgUrl
+	 	FROM alumnus_voice vo
+			left outer join author voAh on vo.author_id = voAh.id
+	 </sql>
+	 
+	 
+	 <select id="getAlumnusVoices" resultMap="alumnusVoices">
+	 	<include refid="alumnusVoicesSql"/>
+	 	<include refid="whoScanConditionSql"/>
+	 </select>
+	 
+	 <select id="getAlumnusVoicesByAuthorId" resultMap="alumnusVoices">
+	 	<include refid="alumnusVoicesSql"/>
+	 	WHERE 
+		<include refid="chooseId"/>
+		    vo.university in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.university}
+			</foreach>
+			AND
+			vo.entryYear in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.entryYear}
+			</foreach>
+			AND
+			vo.college in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.college}
+			</foreach>
+			AND vo.whoScan=1 
+			AND vo.author_id = #{authorId}
+			
+			OR
+			vo.university in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.university}
+			</foreach>
+			AND
+			vo.entryYear not in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.entryYear}
+			</foreach>
+			AND
+			vo.college in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.college}
+			</foreach>
+			AND vo.whoScan=2 
+			AND vo.author_id = #{authorId}
+			
+			OR
+			vo.university in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.university}
+			</foreach>
+			AND
+			vo.entryYear not in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.entryYear}
+			</foreach>
+			AND
+			vo.college not in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.college}
+			</foreach>
+			AND vo.whoScan=3  
+			AND vo.author_id = #{authorId}
+			
+			OR
+			vo.university in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.university}
+			</foreach>
+			AND
+			vo.entryYear  in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.entryYear}
+			</foreach>
+			AND
+			vo.college not in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.college}
+			</foreach>
+		    AND vo.whoScan=4
+		    AND vo.author_id = #{authorId}
+		 <include refid="chooselimit"/>
+	 </select>
+	 
+	  <select id="viewOwnVoices" parameterType="map" resultMap="ownAlumnusVoices">
+	  	<include refid="ownAlumnusVoicesSql"/>
+	  		WHERE
+	  		<include refid="chooseId"/>
+		  		vo.university in
+		  		<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			   	 	#{item.university}
+				</foreach>
+				AND
+				vo.entryYear in
+				<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			   	 	#{item.entryYear}
+				</foreach>
+				AND
+				vo.author_id =#{authorId}
+			<include refid="chooselimit"/>
+	 </select>
+	 
+	 <select id="getAlumnusVoicesByTypes" parameterType="map" resultMap="alumnusVoices">
+	 	<include refid="alumnusVoicesSql"/>
+	 		WHERE
+	 		<include refid="chooseId"/>
+		 		vo.university in
+				<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			   	 	#{item.university}
+				</foreach>
+				AND
+				vo.entryYear in
+				<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			   	 	#{item.entryYear}
+				</foreach>
+				AND
+				vo.college in
+				<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			   	 	#{item.college}
+				</foreach>
+				AND vo.whoScan=1 AND vo.label = #{label}
+				
+				OR
+				vo.university in
+				<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			   	 	#{item.university}
+				</foreach>
+				AND
+				vo.entryYear not in
+				<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			   	 	#{item.entryYear}
+				</foreach>
+				AND
+				vo.college in
+				<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			   	 	#{item.college}
+				</foreach>
+				AND vo.whoScan=2 AND vo.label = #{label}
+				
+				OR
+				vo.university in
+				<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			   	 	#{item.university}
+				</foreach>
+				AND
+				vo.entryYear not in
+				<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			   	 	#{item.entryYear}
+				</foreach>
+				AND
+				vo.college not in
+				<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			   	 	#{item.college}
+				</foreach>
+				AND vo.whoScan=3  AND vo.label = #{label}
+				
+				OR
+				vo.university in
+				<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			   	 	#{item.university}
+				</foreach>
+				AND
+				vo.entryYear  in
+				<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			   	 	#{item.entryYear}
+				</foreach>
+				AND
+				vo.college not in
+				<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+			   	 	#{item.college}
+				</foreach>
+			    AND vo.whoScan=4  AND vo.label = #{label}
+			<include refid="chooselimit"/>
+	 </select>
+	 
+	 <select id="getAlumnusVoicesByCollege" parameterType="map" resultMap="alumnusVoices">
+	 	<include refid="alumnusVoicesSql"/>
+	 	WHERE
+	 	<include refid="chooseId"/>
+	 	    vo.university in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.university}
+			</foreach>
+			AND
+			vo.entryYear in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.entryYear}
+			</foreach>
+			AND
+			vo.college in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{college}
+			</foreach>
+			AND vo.whoScan=1 
+			
+			OR
+			vo.university in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.university}
+			</foreach>
+			AND
+			vo.entryYear not in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.entryYear}
+			</foreach>
+			AND
+			vo.college in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{college}
+			</foreach>
+			AND vo.whoScan=2 
+			
+			OR
+			vo.university in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.university}
+			</foreach>
+			AND
+			vo.entryYear not in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.entryYear}
+			</foreach>
+			AND
+			vo.college not in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{college}
+			</foreach>
+			AND vo.whoScan=3  
+			
+			OR
+			vo.university in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.university}
+			</foreach>
+			AND
+			vo.entryYear  in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.entryYear}
+			</foreach>
+			AND
+			vo.college not in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{college}
+			</foreach>
+		    AND vo.whoScan=4
+		 <include refid="chooselimit"/>  
+	 </select>
+	 
+	 <select id="getAlumnusVoicesByTypesAndCollege" parameterType="map" resultMap="alumnusVoices">
+	 	<include refid="alumnusVoicesSql"></include>
+	 	WHERE
+	 	<include refid="chooseId"/> 
+	 		vo.university in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.university}
+			</foreach>
+			AND
+			vo.entryYear in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.entryYear}
+			</foreach>
+			AND
+			vo.college in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{college}
+			</foreach>
+			AND vo.whoScan=1 AND vo.label = #{label}
+			
+			OR
+			vo.university in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.university}
+			</foreach>
+			AND
+			vo.entryYear not in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.entryYear}
+			</foreach>
+			AND
+			vo.college in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{college}
+			</foreach>
+			AND vo.whoScan=2 AND vo.label = #{label}
+			
+			OR
+			vo.university in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.university}
+			</foreach>
+			AND
+			vo.entryYear not in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.entryYear}
+			</foreach>
+			AND
+			vo.college not in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{college}
+			</foreach>
+			AND vo.whoScan=3  AND vo.label = #{label}
+			
+			OR
+			vo.university in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.university}
+			</foreach>
+			AND
+			vo.entryYear  in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{item.entryYear}
+			</foreach>
+			AND
+			vo.college not in
+			<foreach collection="labels" index="index" item="item" open="(" separator="," close=")">
+		   	 	#{college}
+			</foreach>
+		    AND vo.whoScan=4  AND vo.label = #{label}
+		 <include refid="chooselimit"/>
+	 </select>
+	 
+	 <select id="queryAuthorById" parameterType="map" resultType="CommentAuthorInfo">
+		SELECT author_id AS authorId FROM alumnus_voice WHERE id =#{id}
+	 </select>
+	 <insert id="saveAlumnsVoice" parameterType="com.nju.edu.cn.software.entity.ReqAlumnusVoice" useGeneratedKeys="true" keyProperty="id">
+	 	INSERT INTO alumnus_voice(title,content,imgPaths,whoScan,author_id,date,entryYear,university,college,label)
+	 	VALUES
+	 	<foreach collection="labelList" item="item" separator=",">
+	 		(#{alumnusVoice.title},#{alumnusVoice.content},#{alumnusVoice.imgPaths},#{alumnusVoice.whoScan},#{item.authorId},now(),#{item.entryYear}
+	 		,#{item.university},#{item.college},#{alumnusVoice.label})
+	 	</foreach>
+	 </insert>
+	 <select id="queryImagePath" parameterType="map" resultType="string">
+	 	SELECT imgPaths FROM alumnus_voice WHERE id =#{id} AND author_id =#{author_id}
+	 </select>
+	 <delete id="cancelAlumnsVoice" parameterType="map">
+		 DELETE FROM alumnus_voice WHERE id =#{id} AND author_id =#{author_id}
+	 </delete>
+	 
+	 <select id="getVoiceLabel" resultType="string">
+	 	SELECT DISTINCT label FROM alumnus_voice
+	 </select>
+	
+</mapper>

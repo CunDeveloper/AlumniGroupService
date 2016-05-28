@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nju.edu.cn.software.mapper.QuestionCollectMapper">
+	
+	 <resultMap type="com.nju.edu.cn.software.entity.AuthorInfo" id="authorInfo">
+		<id property="authorId" column="ahId"/>
+		<result property="authorName" column="ahName"/>
+		<result property="headUrl" column="ahHeadUrl"/>
+		<result property="label" column="avoAhLabel"/>
+	  </resultMap>
+	
+	<resultMap type="QuestionCollect" id="questionCollect">
+		<id column="qId" property="id" />
+		<result column="qAuthorId" property="authorId"/>
+		<result column="qDate" property="date"/>
+		<association property="alumniQuestion" javaType="AlumniQuestion">
+			<id column="aqId" property="id"/>
+			<result column="aqProblem" property="problem"/>
+			<result property="description" column="aqDescription"/>
+			<result property="imgPaths" column="aqImgPaths"/>
+			<result property="label" column="aqLabel"/>
+			<result property="date" column="aqDate"/>
+			<association property="author" resultMap="authorInfo"/>
+		</association>
+	</resultMap>
+	
+	<insert id="save" parameterType="QuestionCollect" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO question_collect (question_id,author_id,date)
+		VALUES(#{alumniQuestion.id},#{authorId},now())
+	</insert>
+	<delete id="deleteCollect" parameterType="map">
+		DELETE FROM question_collect where id = #{id} AND author_id = #{authorId}
+	</delete>
+	
+	<select id="getCollects" parameterType="map" resultMap="questionCollect">
+		SELECT 
+			qc.id as qId,
+			qc.author_id as qAuthorId,
+			qc.date as qDate,
+			aq.id as aqId,
+	 		aq.problem as aqProblem,
+	 		aq.description as aqDescription,
+	 		aq.imgPaths as aqImgPaths,
+	 		aq.date as aqDate,
+	 		aq.label as aqLabel,
+	 		CONCAT(aq.university,aq.college," ",aq.entryYear) as avoAhLabel,
+	 		ah.id as ahId,
+	 		ah.username as ahName,
+	 		ah.headIconUrl as ahHeadUrl
+			FROM question_collect qc
+				LEFT OUTER JOIN alumni_question aq ON qc.question_id= aq.id
+				LEFT OUTER JOIN author ah ON aq.authorId = ah.id
+			WHERE qc.author_id = #{authorId}
+	</select>
+	
+	<select id="isCollected" parameterType="map" resultType="int">
+		SELECT count(id) FROM question_collect where question_id = #{id} AND author_id = #{authorId}
+	</select>
+	
+</mapper>

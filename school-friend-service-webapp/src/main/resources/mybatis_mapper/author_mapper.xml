@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nju.edu.cn.software.mapper.AuthorMapper">
+	<select id="getAuthorById" parameterType="int" resultType="Author">
+		SELECT * FROM author WHERE id = #{id}
+	</select>
+	
+	<select id="getAuthorName" parameterType="map" resultType="string">
+		SELECT username FROM author WHERE id = #{id}
+	</select>
+	
+	<select id="getAuthorByNameAndPass" parameterType="map" resultType="Author" >
+		SELECT id as id,loginName as loginName 
+		FROM author WHERE loginName=#{loginName} AND password=#{password}
+	</select>
+	
+	<insert id="saveAuthor" parameterType="Author"  useGeneratedKeys="true"  keyProperty="id">
+		INSERT INTO author(date,loginName,password,phone,email)
+		VALUES(now(),#{loginName},#{password},#{phone},#{email})
+	</insert>
+	
+	<update id="updateHeadIcon" parameterType="map">
+		UPDATE author
+		SET headIconUrl=#{headIconUrl}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="updateBgImg" parameterType="map">
+		UPDATE author
+		SET bgUrl=#{bgUrl}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="updateTokenId" parameterType="map">
+		UPDATE author
+		SET tokenId = #{tokenId} WHERE id = #{id}
+	</update>
+	
+	<select id="getTokenIdByAuthorId" parameterType="map" resultType="string">
+		SELECT tokenId FROM author WHERE id = #{author_id}
+	</select>
+	
+	<select id="getAuthorImage" parameterType="map" resultType="AuthorImage">
+		SELECT id,headIconUrl,bgUrl FROM author WHERE id = #{authorId}
+	</select>
+	
+	<select id="validatePhoneIsRegister" parameterType="map" resultType="int">
+		SELECT count(id) FROM author WHERE phone =#{phone}
+	</select>
+	
+	<select id="validateEmailIsRegister" parameterType="map" resultType="int">
+		SELECT count(id) FROM author WHERE email =#{email}
+	</select>
+	
+	<update id="updateUserName" parameterType="map">
+		UPDATE author
+		SET username = #{username} WHERE id = #{authorId}
+	</update>
+	
+	<select id="validateUsernameIsRegister" parameterType="map" resultType="int">
+		SELECT count(id) FROM author WHERE loginName = #{loginName}
+	</select>
+</mapper>

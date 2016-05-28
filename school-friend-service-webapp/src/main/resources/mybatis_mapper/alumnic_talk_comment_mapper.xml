@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nju.edu.cn.software.mapper.AlumniTalkCommentMapper">
+	<resultMap type="AlumniTalkComment" id="respTalkComment">
+		<id property="id" column="cId"/>
+		<result property="content" column="cContent"/>
+		<result property="date" column="cDate"/>
+		<result property="alumnicTalkId" column="cTalkId"/>
+		<association property="commentAuthor" javaType="com.nju.edu.cn.software.entity.AuthorInfo">
+			<result property="authorId" column="cAuthorId"/>
+			<result property="authorName" column="cAuthorName"/>
+			<result property="headUrl" column="cHeadUrl"/>
+		</association>
+		<association property="commentedAuthor" javaType="com.nju.edu.cn.software.entity.AuthorInfo">
+			<result property="authorId" column="cCommentedAuthorID"/>
+			<result property="authorName" column="cCommentedAuthorName"/>
+		</association>
+	</resultMap>
+	<select id="getTalkCommentsByIds" resultMap="respTalkComment">
+		SELECT 
+			c.id as cId,
+			c.content as cContent,
+			c.date as cDate,
+			c.comment_author_id as cAuthorId,
+			ah.username as cAuthorName,
+	 		ah.headIconUrl as cHeadUrl,
+			c.commented_author_id as  cCommentedAuthorID,
+			c.commented_author_name as cCommentedAuthorName,
+			c.alumni_talk_id as cTalkId
+		FROM
+			alumni_talk_comment AS c
+			left outer join author ah on c.comment_author_id = ah.id
+		WHERE
+			c.alumni_talk_id in
+			<foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+		    	#{item.id}
+			</foreach> 
+			AND c.comment_author_id=#{authorId} 
+		
+			OR 
+			
+			c.alumni_talk_id in
+			<foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+		    	#{item.id}
+			</foreach> 
+			AND c.commented_author_id = #{authorId}
+	</select>
+	
+	<insert id="contentComment" parameterType="ContentComment" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO alumni_talk_comment(comment_author_id,comment_author_name,content,alumni_talk_id,commented_author_id,commented_author_name,date)
+		VALUES(#{commentAuthor.authorId},#{commentAuthor.authorName},#{content},#{contentId},#{commentedAuthor.authorId},#{commentedAuthor.authorName},now());
+	</insert>
+	 
+	 <delete id="deleteComment" parameterType="map">
+	 	DELETE FROM alumni_talk_comment WHERE id = #{id} AND comment_author_id=#{commentAuthorId}
+	 </delete>
+	  <select id="getCommentAuthorById" resultType="CommentAuthorInfo" parameterType="map">
+	 	SELECT 
+		 	comment_author_id as authorId,
+		 	comment_author_name as authorName,
+		 	alumni_talk_id as contentId
+	 	FROM 
+	 		alumni_talk_comment 
+	 	WHERE id =#{id}
+	 </select>
+</mapper>

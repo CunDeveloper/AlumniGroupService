@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nju.edu.cn.software.mapper.AskRecommendWorkMapper">
+	  
+	 <select id="getAskAuthorById" resultType="CommentAuthorInfo" parameterType="map">
+	 	SELECT 
+		 	ask_author_id as authorId,
+		 	ask_author_name as authorName,
+		 	work_id as contentId
+	 	FROM 
+	 		ask_recommend_work 
+	 	WHERE id =#{askRecommendWorkId}
+	 </select>
+	 
+	 <resultMap type="ContentComment" id = "contentComments">
+	 	<id property="id" column="rwaId"/>
+		<result property="date" column="rwaDate"/>
+		<result property="content" column="rwaContent"/>
+		<result property="contentId" column="rwaWorkId"/>
+		<association property="commentAuthor" javaType="com.nju.edu.cn.software.entity.AuthorInfo">
+			<result property="authorId" column="rwaAskAuthorId"/>
+			<result property="authorName" column="rwaAskAuthorName"/>
+			<result property="headUrl" column="rwaAskAuthorHeadUrl"/>
+		</association>
+		<association property="commentedAuthor" javaType="AuthorInfoShort">
+			<result property="authorId" column="rwaAskedAuthorId"/>
+			<result property="authorName" column="rwaAskedAuthorName"/>
+		</association>
+	 </resultMap>
+	 
+	 <select id="getAskAboutRecommends" resultMap="contentComments" >
+	 	SELECT
+			rwa.id as rwaId,
+			rwa.date as rwaDate,
+			rwa.content as rwaContent,
+			rwa.ask_author_id as rwaAskAuthorId,
+			ah.username as rwaAskAuthorName,
+			ah.headIconUrl as rwaAskAuthorHeadUrl,
+			rwa.asked_author_id as rwaAskedAuthorId,
+			rwa.asked_author_name as rwaAskedAuthorName,
+			rwa.work_id as rwaWorkId
+		FROM 
+			ask_recommend_work rwa 
+			left outer join author ah on rwa.ask_author_id = ah.id
+		WHERE 
+			rwa.work_id in
+			<foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+		    	#{item.id}
+			</foreach> 
+	 </select>
+</mapper>

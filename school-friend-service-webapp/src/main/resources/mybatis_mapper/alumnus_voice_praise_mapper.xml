@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nju.edu.cn.software.mapper.AlumnusVoicePraiseMapper">
+	<resultMap type="AlumnusVoicePraise" id="voicePraise">
+		<id property="id" column="avo_p_Id"/>
+	    <result property="date" column="avo_p_Date"/>
+	    <result property="contentId" column="avo_p_voice_id"/>
+	    <association property="praiseAuthor" javaType="com.nju.edu.cn.software.entity.AuthorInfo">
+	    	<result property="authorId" column="avo_p_ommentedAuthorID"/>
+			<result property="authorName" column="avo_p_commentedAuthorName"/>
+			<result property="headUrl" column="avo_p_headUrl"/>
+	    </association>
+	</resultMap>
+	
+	<select id="getPraisesByVoiceId" parameterType="map" resultMap="voicePraise">
+		SELECT 
+			vop.id as avo_p_Id,
+	 		vop.date as avo_p_Date,
+	 		vop.content_id as avo_p_voice_id,
+	 		ah.username as avo_p_commentedAuthorName,
+	 		ah.headIconUrl as avo_p_headUrl,
+	 		vop.praise_author_id as avo_p_ommentedAuthorID
+	 	FROM 
+	 		alumnus_voice_praise vop
+	 		left outer join author ah on vop.praise_author_id = ah.id
+	 	WHERE
+	 		vop.content_id in
+	 		<foreach collection="ids" index="index" item="item" open="(" separator="," close=")">
+		    	#{item.id}
+			</foreach> 
+	</select>
+	
+	 <insert id="saveAlumnusVoicePraise" useGeneratedKeys="true" keyProperty="id">
+	 	INSERT INTO alumnus_voice_praise(praise_author_id,praise_author_name,content_id,date)
+	 	VALUES(#{praiseAuthor.authorId},#{praiseAuthor.authorName},#{contentId},now())
+	 </insert>
+	 
+	 <delete id="cancelAlumnusVoicePraise" parameterType="map">
+	 	DELETE FROM alumnus_voice_praise WHERE id =#{id} AND praise_author_id = #{praiseAuthorId}
+	 </delete>
+	 
+	 <select id="isPraised" resultType="int" parameterType="map">
+	 	SELECT count(id) FROM alumnus_voice_praise WHERE praise_author_id =#{authorId}
+	 	AND content_id = #{contentId}
+	 </select>
+</mapper>

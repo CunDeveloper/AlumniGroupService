@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nju.edu.cn.software.mapper.RecommendCollectMapper">
+	
+	 <resultMap type="com.nju.edu.cn.software.entity.AuthorInfo" id="authorInfo">
+		<id property="authorId" column="ahId"/>
+		<result property="authorName" column="ahName"/>
+		<result property="headUrl" column="ahHeadUrl"/>
+		<result property="label" column="avoAhLabel"/>
+	  </resultMap>
+	
+	<resultMap type="RecommendCollect" id="recommendCollect">
+		<id column="rcId" property="id" />
+		<result column="rcAuthorId" property="authorId"/>
+		<result column="rcDate" property="date"/>
+		<association property="recommendWork" javaType="RecommendWork">
+			<id column="rwId" property="id"/>
+			<result column="rwTitle" property="title"/>
+			<result property="content" column="rwContent"/>
+			<result property="imgPaths" column="rwImgPaths"/>
+			<result property="email" column="rwEmail"/>
+			<result property="type" column="rwType"/>
+			<result property="date" column="rwDate"/>
+			<association property="author" resultMap="authorInfo"/>
+		</association>
+	</resultMap>
+	
+	<insert id="saveCollect" parameterType="RecommendCollect" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO recommend_collect (recommend_id,author_id,date)
+		VALUES(#{recommendWork.id},#{authorId},now())
+	</insert>
+	<delete id="deleteCollect" parameterType="map">
+		DELETE FROM recommend_collect where id = #{id} AND author_id = #{authorId}
+	</delete>
+	
+	<select id="getCollects" parameterType="map" resultMap="recommendCollect">
+		SELECT 
+			rc.id as rcId,
+			rc.author_id as rcAuthorId,
+			rc.date as rcDate,
+			rw.id as rwId,
+	 		rw.title as rwTitle,
+	 		rw.content as rwContent,
+	 		rw.imgPath as rwImgPaths,
+	 		rw.date as rwDate,
+	 		rw.type as rwType,
+	 		CONCAT(rw.university,rw.college," ",rw.entryYear) as avoAhLabel,
+	 		ah.id as ahId,
+	 		ah.username as ahName,
+	 		ah.headIconUrl as ahHeadUrl
+			FROM recommend_collect rc
+				LEFT OUTER JOIN recommend_work rw ON rc.recommend_id= rw.id
+				LEFT OUTER JOIN author ah ON rw.author_id = ah.id
+			WHERE rc.author_id = #{authorId}
+	</select>
+	
+	<select id="isCollected" parameterType="map" resultType="int">
+		SELECT count(id) FROM recommend_collect where recommend_id = #{id} AND author_id = #{authorId}
+	</select>
+	
+</mapper>
